@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}訂單管理與出貨狀態{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title"><i class="bi bi-receipt-cutoff text-primary me-2"></i>訂單管理與狀態維護</h1>
+        <p class="page-subtitle">瀏覽銷貨單據、即時更新出貨狀態，並產出專屬物流出貨單與 QRCode</p>
+    </div>
+    <a href="{{ url_for('order_new') }}" class="btn btn-primary-custom shadow-sm">
+        <i class="bi bi-cart-plus-fill me-1"></i> 新增訂單 (多選商品)
+    </a>
+</div>
+
+<div class="card-custom">
+    <div class="p-3 border-bottom bg-light-subtle d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="small text-secondary">
+            <i class="bi bi-info-circle-fill text-primary me-1"></i>
+            <strong>狀態切換提示：</strong>您可直接在下方列表的「訂單狀態」下拉選單中快速變更狀態（處理中 / 已出貨 / 已完成 / 已取消），系統將即時非同步儲存至資料庫。
+        </div>
+        <div class="small text-muted">
+            共 <span class="fw-bold text-dark">{{ orders | length }}</span> 筆訂單記錄
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
+                <tr>
+                    <th>訂單編號 (PK)</th>
+                    <th>客戶名稱 (FK)</th>
+                    <th>訂單日期</th>
+                    <th>訂單明細品項</th>
+                    <th class="text-end">訂單總金額</th>
+                    <th style="min-width: 150px;">訂單狀態 (可直接更新)</th>
+                    <th>負責業務</th>
+                    <th class="text-end">專屬操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr>
+                    <td class="fw-bold font-monospace">
+                        <a href="{{ url_for('order_detail', order_id=o.order_id) }}" class="text-primary text-decoration-none" title="點擊檢視專屬出貨單">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>{{ o.order_id }}
+                        </a>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark">{{ o.customer_name }}</div>
+                        <small class="text-muted font-monospace">{{ o.customer_id }}</small>
+                    </td>
+                    <td><span class="text-muted">{{ o.order_date }}</span></td>
+                    <td>
+                        {% if o.item_count > 1 %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                                <i class="bi bi-layers-fill me-1"></i>多項商品 ({{ o.item_count }} 項)
+                            </span>
+                        {% else %}
+                            <span class="badge bg-light text-secondary border px-2 py-1">
+                                {{ o.item_count }} 項商品
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end fw-bold text-dark font-monospace fs-6">
+                        ${{ o.total_amount | currency }}
+                    </td>
+                    <td>
+                        <!-- 可直接在列表中更新狀態的互動式選單 -->
+                        <select class="form-select form-select-sm ajax-status-select fw-semibold {{ 'border-warning text-dark' if o.status == '處理中' else 'border-info text-primary' if o.status == '已出貨' else 'border-success text-success' if o.status == '已完成' else 'border-secondary text-secondary' }}"
+                                data-order-id="{{ o.order_id }}"
+                                data-current-status="{{ o.status }}"
+                                title="選擇即可直接更新狀態">
+                            <option value="處理中" {{ 'selected' if o.status == '處理中' }}>處理中</option>
+                            <option value="已出貨" {{ 'selected' if o.status == '已出貨' }}>已出貨</option>
+                            <option value="已完成" {{ 'selected' if o.status == '已完成' }}>已完成</option>
+                            <option value="已取消" {{ 'selected' if o.status == '已取消' }}>已取消</option>
+                        </select>
+                    </td>
+                    <td><span class="text-secondary"><i class="bi bi-person-badge me-1"></i>{{ o.sales_rep }}</span></td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('order_detail', order_id=o.order_id) }}" class="btn btn-outline-primary" title="檢視出貨單與QRCode">
+                                <i class="bi bi-qr-code-scan me-1"></i>出貨單
+                            </a>
+                            <form method="POST" action="{{ url_for('order_delete', order_id=o.order_id) }}" class="d-inline" onsubmit="return confirm('確定要刪除訂單 [{{ o.order_id }}] 嗎？明細資料亦將一併移除。');">
+                                <button type="submit" class="btn btn-outline-danger" title="刪除訂單">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">目前暫無任何訂單資料</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

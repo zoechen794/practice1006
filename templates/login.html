@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}管理員登入{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle bg-primary-subtle text-primary mb-3" style="width: 64px; height: 64px;">
+                <i class="bi bi-shield-lock-fill fs-2"></i>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">管理員登入</h3>
+            <p class="text-muted small">請輸入系統管理者帳號密碼以維護訂單資料</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login', next=request.args.get('next')) }}">
+            <div class="mb-3">
+                <label for="username" class="form-label fw-semibold text-secondary">
+                    <i class="bi bi-person me-1"></i>管理員帳號
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-person-fill text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" id="username" name="username" value="admin" required autofocus placeholder="請輸入帳號">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label fw-semibold text-secondary">
+                    <i class="bi bi-key me-1"></i>登入密碼
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock-fill text-muted"></i></span>
+                    <input type="password" class="form-control border-start-0" id="password" name="password" value="admin123" required placeholder="請輸入密碼">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary-custom w-100 py-2 fs-6 shadow-sm mb-3">
+                <i class="bi bi-box-arrow-in-right me-1"></i> 立即登入
+            </button>
+        </form>
+
+        <div class="p-3 bg-light rounded-3 border border-dashed text-secondary small">
+            <div class="fw-bold mb-1 text-primary"><i class="bi bi-info-circle-fill me-1"></i>預設測試憑證：</div>
+            <div><strong>帳號：</strong> <code>admin</code></div>
+            <div><strong>密碼：</strong> <code>admin123</code></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

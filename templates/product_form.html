@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }}商品資料{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header mb-3">
+            <a href="{{ url_for('product_list') }}" class="btn btn-sm btn-link text-decoration-none ps-0 mb-2">
+                <i class="bi bi-arrow-left me-1"></i> 返回商品列表
+            </a>
+            <h1 class="page-title">{{ action }}商品資料</h1>
+            <p class="page-subtitle">維護商品規格、售價及安全庫存量 (SQLite CHECK 約束保障)</p>
+        </div>
+
+        <div class="card-custom p-4">
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="product_id" class="form-label fw-semibold">
+                        商品編號 (PK) <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control font-monospace" id="product_id" name="product_id"
+                           value="{{ product.product_id if product else '' }}"
+                           {{ 'readonly' if action == '編輯' else 'required' }}
+                           placeholder="例如：P006">
+                </div>
+
+                <div class="mb-3">
+                    <label for="name" class="form-label fw-semibold">
+                        商品名稱 <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="name" name="name"
+                           value="{{ product.name if product else '' }}"
+                           required placeholder="請輸入完整商品規格與型號名稱">
+                </div>
+
+                <div class="mb-3">
+                    <label for="category" class="form-label fw-semibold">
+                        商品分類 <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="category" name="category"
+                           value="{{ product.category if product else '' }}"
+                           required placeholder="例如：電腦周邊、顯示設備、辦公配件">
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="price" class="form-label fw-semibold">
+                            商品單價 (NT$) <span class="text-danger">* (CHECK &ge; 0)</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" step="1" min="0" class="form-control" id="price" name="price"
+                                   value="{{ product.price if product else 0 }}" required>
+                        </div>
+                        <div class="form-text">單價不可為負數。此處調價不影響已成交的歷史訂單。</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="stock" class="form-label fw-semibold">
+                            庫存數量 <span class="text-danger">* (CHECK &ge; 0)</span>
+                        </label>
+                        <input type="number" min="0" class="form-control" id="stock" name="stock"
+                               value="{{ product.stock if product else 0 }}" required>
+                        <div class="form-text">庫存不可為負數。開立訂單時將自動扣減。</div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('product_list') }}" class="btn btn-outline-secondary">取消</a>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-check-lg me-1"></i> 儲存商品設定
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

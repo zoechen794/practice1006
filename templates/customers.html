@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}客戶資料維護{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title"><i class="bi bi-people-fill text-primary me-2"></i>客戶資料管理</h1>
+        <p class="page-subtitle">維護買家客戶基本檔案、通訊電話與出貨地址</p>
+    </div>
+    <a href="{{ url_for('customer_new') }}" class="btn btn-primary-custom shadow-sm">
+        <i class="bi bi-person-plus-fill me-1"></i> 新增客戶
+    </a>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
+                <tr>
+                    <th>客戶編號 (PK)</th>
+                    <th>客戶名稱</th>
+                    <th>聯絡電話</th>
+                    <th>送貨地址</th>
+                    <th>建檔日期</th>
+                    <th>關聯訂單</th>
+                    <th class="text-end">管理操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in customers %}
+                <tr>
+                    <td class="fw-bold text-primary font-monospace">{{ c.customer_id }}</td>
+                    <td class="fw-semibold text-dark">{{ c.name }}</td>
+                    <td>
+                        {% if c.phone %}
+                            <i class="bi bi-telephone text-muted me-1"></i>{{ c.phone }}
+                        {% else %}
+                            <span class="text-muted">未填寫</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if c.address %}
+                            <i class="bi bi-geo-alt text-muted me-1"></i>{{ c.address }}
+                        {% else %}
+                            <span class="text-muted">未填寫</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="text-muted small">{{ c.created_date }}</span></td>
+                    <td>
+                        {% if c.order_count > 0 %}
+                            <span class="badge bg-primary-subtle text-primary border">{{ c.order_count }} 筆訂單</span>
+                        {% else %}
+                            <span class="badge bg-light text-muted border">無訂單</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('customer_edit', customer_id=c.customer_id) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-pencil me-1"></i>編輯
+                            </a>
+                            <form method="POST" action="{{ url_for('customer_delete', customer_id=c.customer_id) }}" class="d-inline" onsubmit="return confirm('確定要刪除客戶 [{{ c.customer_id }}] {{ c.name }} 嗎？');">
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash me-1"></i>刪除
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">目前暫無客戶資料</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

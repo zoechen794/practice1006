@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }}客戶資料{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header mb-3">
+            <a href="{{ url_for('customer_list') }}" class="btn btn-sm btn-link text-decoration-none ps-0 mb-2">
+                <i class="bi bi-arrow-left me-1"></i> 返回客戶列表
+            </a>
+            <h1 class="page-title">{{ action }}客戶資料</h1>
+            <p class="page-subtitle">填寫客戶識別編號、姓名與收件地址</p>
+        </div>
+
+        <div class="card-custom p-4">
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="customer_id" class="form-label fw-semibold">
+                        客戶編號 (PK) <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control font-monospace" id="customer_id" name="customer_id"
+                           value="{{ customer.customer_id if customer else '' }}"
+                           {{ 'readonly' if action == '編輯' else 'required' }}
+                           placeholder="例如：C006">
+                    <div class="form-text">作為客戶在系統中的主鍵唯一識別碼 (Primary Key)。</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="name" class="form-label fw-semibold">
+                        客戶姓名 <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="name" name="name"
+                           value="{{ customer.name if customer else '' }}"
+                           required placeholder="請輸入客戶名稱或公司抬頭">
+                </div>
+
+                <div class="mb-3">
+                    <label for="phone" class="form-label fw-semibold">聯絡電話</label>
+                    <input type="text" class="form-control" id="phone" name="phone"
+                           value="{{ customer.phone if customer else '' }}"
+                           placeholder="例如：0912-345-678 或 02-2345-6789">
+                </div>
+
+                <div class="mb-4">
+                    <label for="address" class="form-label fw-semibold">送貨地址</label>
+                    <textarea class="form-control" id="address" name="address" rows="3"
+                              placeholder="請輸入完整寄送或發票地址">{{ customer.address if customer else '' }}</textarea>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('customer_list') }}" class="btn btn-outline-secondary">取消</a>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-check-lg me-1"></i> 儲存客戶資料
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

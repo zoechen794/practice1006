@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}開立新訂單 (多選品項){% endblock %}
+
+{% block content %}
+<div class="page-header mb-3">
+    <a href="{{ url_for('order_list') }}" class="btn btn-sm btn-link text-decoration-none ps-0 mb-2">
+        <i class="bi bi-arrow-left me-1"></i> 返回訂單列表
+    </a>
+    <h1 class="page-title"><i class="bi bi-cart-check-fill text-primary me-2"></i>開立新訂單</h1>
+    <p class="page-subtitle">選取客戶、批次勾選多項商品並指定數量，系統將自動鎖定下單成交單價</p>
+</div>
+
+<form method="POST" id="orderNewForm">
+    <div class="row g-4">
+        <!-- 左側：訂單基本資訊與商品選單 -->
+        <div class="col-lg-8">
+            <!-- 1. 訂單基本資訊 -->
+            <div class="card-custom p-4 mb-4">
+                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                    <i class="bi bi-file-earmark-text text-primary me-2"></i>訂單基本資料
+                </h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="order_id" class="form-label fw-semibold">
+                            訂單編號 (PK) <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control font-monospace" id="order_id" name="order_id"
+                               value="{{ next_order_id }}" required placeholder="例如：ORD-2024006">
+                        <div class="form-text">唯一訂單流水號</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="customer_id" class="form-label fw-semibold">
+                            客戶名稱 (FK 下拉選單) <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="customer_id" name="customer_id" required>
+                            <option value="" disabled selected>-- 請選擇客戶 --</option>
+                            {% for c in customers %}
+                            <option value="{{ c.customer_id }}">
+                                [{{ c.customer_id }}] {{ c.name }} ({{ c.phone or '無電話' }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">關聯至 customer 資料表之客戶主鍵</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="order_date" class="form-label fw-semibold">訂單日期</label>
+                        <input type="date" class="form-control" id="order_date" name="order_date"
+                               value="{{ today_str }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="status" class="form-label fw-semibold">訂單初始狀態</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="處理中" selected>處理中</option>
+                            <option value="已出貨">已出貨</option>
+                            <option value="已完成">已完成</option>
+                            <option value="已取消">已取消</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="sales_rep" class="form-label fw-semibold">業務經辦人員</label>
+                        <input type="text" class="form-control" id="sales_rep" name="sales_rep"
+                               value="{{ current_user.name }}" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 商品多選清單與數量 (支援一次勾選多項商品) -->
+            <div class="card-custom p-4">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-boxes text-primary me-2"></i>勾選訂購商品與數量
+                    </h5>
+                    <span class="small text-muted">可一次勾選多個項目並填寫採購數量</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;" class="text-center">選取</th>
+                                <th>商品編號與名稱</th>
+                                <th>分類</th>
+                                <th class="text-end">目前單價</th>
+                                <th class="text-center">在庫庫存</th>
+                                <th style="width: 140px;">購買數量 (CHECK &gt; 0)</th>
+                                <th class="text-end" style="width: 120px;">小計金額</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in products %}
+                            <tr id="row_{{ p.product_id }}">
+                                <td class="text-center">
+                                    <input class="form-check-input product-select-chk fs-5"
+                                           type="checkbox"
+                                           name="product_ids"
+                                           value="{{ p.product_id }}"
+                                           id="chk_{{ p.product_id }}"
+                                           data-price="{{ p.price }}"
+                                           {{ 'disabled' if p.stock <= 0 }}>
+                                </td>
+                                <td>
+                                    <label class="form-check-label fw-semibold d-block text-dark cursor-pointer" for="chk_{{ p.product_id }}">
+                                        {{ p.name }}
+                                    </label>
+                                    <small class="text-muted font-monospace">{{ p.product_id }}</small>
+                                </td>
+                                <td><span class="badge bg-light text-secondary border">{{ p.category }}</span></td>
+                                <td class="text-end fw-semibold font-monospace">${{ p.price | currency }}</td>
+                                <td class="text-center">
+                                    {% if p.stock > 0 %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">{{ p.stock }} 件</span>
+                                    {% else %}
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">缺貨中</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <input type="number"
+                                           class="form-control form-control-sm product-qty-input text-center font-monospace"
+                                           name="quantity_{{ p.product_id }}"
+                                           id="qty_{{ p.product_id }}"
+                                           value="1"
+                                           min="1"
+                                           max="{{ p.stock }}"
+                                           disabled>
+                                </td>
+                                <td class="text-end fw-bold font-monospace text-primary">
+                                    $<span id="subtotal_{{ p.product_id }}">0</span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">目前無商品可供選購</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：即時訂單小計卡片與送出 -->
+        <div class="col-lg-4">
+            <div class="card-custom p-4 sticky-top" style="top: 85px;">
+                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                    <i class="bi bi-calculator-fill text-primary me-2"></i>即時試算總計
+                </h5>
+
+                <div class="d-flex justify-content-between mb-2 text-secondary">
+                    <span>已勾選商品種類：</span>
+                    <span class="fw-bold text-dark"><span id="summaryItemCount">0</span> 項</span>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3 text-secondary">
+                    <span>訂購總商品件數：</span>
+                    <span class="fw-bold text-dark"><span id="summaryTotalQty">0</span> 件</span>
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-between align-items-baseline mb-4">
+                    <span class="fs-5 fw-bold text-dark">訂單總金額：</span>
+                    <div class="text-end">
+                        <span class="fs-3 fw-bold text-primary font-monospace">$<span id="summaryTotalAmount">0</span></span>
+                        <div class="small text-muted">新台幣 (TWD)</div>
+                    </div>
+                </div>
+
+                <!-- 業務說明提醒 -->
+                <div class="alert alert-light border small text-muted mb-4">
+                    <i class="bi bi-shield-check text-success me-1"></i>
+                    <strong>下單鎖價機制：</strong>送出訂單後，明細資料表 <code>order_item.unit_price</code> 將固化當前單價，往後即使商品主檔調整售價，本訂單的歷史金額亦不受影響。
+                </div>
+
+                <button type="submit" id="submitOrderBtn" class="btn btn-primary-custom w-100 py-2.5 fs-5 shadow-sm" disabled>
+                    <i class="bi bi-check-circle me-1"></i> 確認成立訂單
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

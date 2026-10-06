@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}商品資料維護{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title"><i class="bi bi-box-seam-fill text-primary me-2"></i>商品與庫存管理</h1>
+        <p class="page-subtitle">維護在庫商品型錄、牌價設定與庫存量 (具備 CHECK 約束)</p>
+    </div>
+    <a href="{{ url_for('product_new') }}" class="btn btn-primary-custom shadow-sm">
+        <i class="bi bi-plus-circle-fill me-1"></i> 新增商品
+    </a>
+</div>
+
+<!-- 提示橫幅：下單當時單價保護機制說明 -->
+<div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center">
+    <i class="bi bi-shield-check fs-3 me-3 text-info-emphasis"></i>
+    <div>
+        <h6 class="fw-bold mb-1">系統定價保護機制說明</h6>
+        <div class="small">
+            在此處調整商品的「單價」，<strong>絕不會變更任何已建立歷史訂單的成交價格</strong>！
+            因為資料表 <code>order_item.unit_price</code> 在成立訂單當下即獨立固化當時單價，滿足業務審計與會計合規要求。
+        </div>
+    </div>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
+                <tr>
+                    <th>商品編號 (PK)</th>
+                    <th>商品名稱</th>
+                    <th>商品分類</th>
+                    <th class="text-end">單價 (CHECK &ge; 0)</th>
+                    <th class="text-center">庫存數量</th>
+                    <th class="text-center">歷史累積銷售</th>
+                    <th class="text-end">管理操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td class="fw-bold text-primary font-monospace">{{ p.product_id }}</td>
+                    <td class="fw-semibold text-dark">{{ p.name }}</td>
+                    <td><span class="badge bg-light text-secondary border">{{ p.category }}</span></td>
+                    <td class="text-end fw-bold text-dark font-monospace">${{ p.price | currency }}</td>
+                    <td class="text-center">
+                        {% if p.stock < 30 %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ p.stock }} 件 (偏低)
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5">
+                                {{ p.stock }} 件
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center text-muted font-monospace">{{ p.total_sold }} 件</td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('product_edit', product_id=p.product_id) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-pencil me-1"></i>編輯 / 改價
+                            </a>
+                            <form method="POST" action="{{ url_for('product_delete', product_id=p.product_id) }}" class="d-inline" onsubmit="return confirm('確定要刪除商品 [{{ p.product_id }}] {{ p.name }} 嗎？');">
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash me-1"></i>刪除
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">目前暫無商品資料</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

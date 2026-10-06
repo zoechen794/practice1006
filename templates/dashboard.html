@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}系統總覽儀表板{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title"><i class="bi bi-speedometer2 text-primary me-2"></i>系統營運總覽</h1>
+        <p class="page-subtitle">掌握即時銷售數據、訂單狀態與商品庫存指標</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('order_new') }}" class="btn btn-primary-custom shadow-sm">
+            <i class="bi bi-cart-plus me-1"></i> 新增訂單
+        </a>
+        <a href="{{ url_for('product_new') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-plus-circle me-1"></i> 新增商品
+        </a>
+    </div>
+</div>
+
+<!-- KPI 統計指標卡片 -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card-custom kpi-card">
+            <div class="kpi-icon-box kpi-icon-indigo">
+                <i class="bi bi-receipt"></i>
+            </div>
+            <div>
+                <div class="kpi-label">總訂單數</div>
+                <div class="kpi-value">{{ total_orders }} <span class="fs-6 fw-normal text-muted">筆</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card-custom kpi-card">
+            <div class="kpi-icon-box kpi-icon-emerald">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <div>
+                <div class="kpi-label">累計營業額 (有效訂單)</div>
+                <div class="kpi-value">${{ total_revenue | currency }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card-custom kpi-card">
+            <div class="kpi-icon-box kpi-icon-sky">
+                <i class="bi bi-people"></i>
+            </div>
+            <div>
+                <div class="kpi-label">客戶總數</div>
+                <div class="kpi-value">{{ total_customers }} <span class="fs-6 fw-normal text-muted">位</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card-custom kpi-card">
+            <div class="kpi-icon-box kpi-icon-amber">
+                <i class="bi bi-boxes"></i>
+            </div>
+            <div>
+                <div class="kpi-label">在庫商品種類</div>
+                <div class="kpi-value">{{ total_products }} <span class="fs-6 fw-normal text-muted">種</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- 最新訂單列表 -->
+    <div class="col-lg-8">
+        <div class="card-custom">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history text-primary me-2"></i>近期訂單動態</h5>
+                <a href="{{ url_for('order_list') }}" class="btn btn-sm btn-link text-decoration-none">查看全部訂單 &rarr;</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>訂單編號</th>
+                            <th>客戶名稱</th>
+                            <th>下單日期</th>
+                            <th>品項數</th>
+                            <th>總金額</th>
+                            <th>狀態</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for o in recent_orders %}
+                        <tr>
+                            <td class="fw-semibold text-primary">
+                                <a href="{{ url_for('order_detail', order_id=o.order_id) }}" class="text-decoration-none">
+                                    {{ o.order_id }}
+                                </a>
+                            </td>
+                            <td>{{ o.customer_name }}</td>
+                            <td><span class="text-muted">{{ o.order_date }}</span></td>
+                            <td><span class="badge bg-light text-dark border">{{ o.item_count }} 項</span></td>
+                            <td class="fw-bold text-dark">${{ o.total_amount | currency }}</td>
+                            <td>
+                                {% if o.status == '處理中' %}
+                                    <span class="status-badge status-processing"><i class="bi bi-hourglass-split"></i> 處理中</span>
+                                {% elif o.status == '已出貨' %}
+                                    <span class="status-badge status-shipped"><i class="bi bi-truck"></i> 已出貨</span>
+                                {% elif o.status == '已完成' %}
+                                    <span class="status-badge status-completed"><i class="bi bi-check2-circle"></i> 已完成</span>
+                                {% else %}
+                                    <span class="status-badge status-cancelled"><i class="bi bi-x-circle"></i> 已取消</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('order_detail', order_id=o.order_id) }}" class="btn btn-sm btn-outline-primary" title="查看出貨單與QRCode">
+                                    <i class="bi bi-qr-code-scan me-1"></i>出貨單
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">目前暫無任何訂單資料</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 庫存預警與系統規則說明 -->
+    <div class="col-lg-4">
+        <!-- 庫存警示 -->
+        <div class="card-custom mb-4">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-exclamation-triangle text-warning me-2"></i>庫存補充提醒</h5>
+                <a href="{{ url_for('product_list') }}" class="btn btn-sm btn-link text-decoration-none">管理商品 &rarr;</a>
+            </div>
+            <div class="p-3">
+                {% if low_stock_products %}
+                <ul class="list-group list-group-flush">
+                    {% for p in low_stock_products %}
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold text-dark">{{ p.name }}</div>
+                            <small class="text-muted">{{ p.category }} | ${{ p.price | currency }}</small>
+                        </div>
+                        <span class="badge {{ 'bg-danger' if p.stock < 30 else 'bg-warning text-dark' }} rounded-pill px-2.5 py-1.5">
+                            剩餘 {{ p.stock }} 件
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center py-3 text-muted">
+                    <i class="bi bi-shield-check text-success fs-3 d-block mb-1"></i>
+                    所有商品庫存充足！
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 系統設計規範亮點 -->
+        <div class="card-custom p-3 bg-light-subtle">
+            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-info-circle text-primary me-2"></i>資料庫與業務邏輯保障</h6>
+            <ul class="small text-secondary mb-0 ps-3">
+                <li class="mb-1"><strong>CHECK 約束保護：</strong>訂單明細數量嚴格限制大於 0、單價不可為負數。</li>
+                <li class="mb-1"><strong>歷史訂單保護：</strong><code>order_item.unit_price</code> 保存下單時之成交價格，後續修改商品售價不會影響既有訂單金額。</li>
+                <li class="mb-1"><strong>出貨單 QRCode：</strong>每張訂單皆具備專屬 <code>/order/&lt;編號&gt;</code> 頁面與實體條碼驗證。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
